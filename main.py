@@ -20,7 +20,7 @@ def index():
         cursor.close()
         connection.close()
 
-    return render_template('form.html', musica = registro, music_to_edit=None)
+    return render_template('form.html', musica = registro, musica_to_edit=None)
 
 @app.route('/', methods=['POST'])
 def submit():
@@ -46,7 +46,7 @@ def submit():
 
 @app.route('/edit/<int:musica_id>',methods=['GET'])
 def edit(musica_id):
-    connection = getDBConnection
+    connection = getDBConnection()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     try:
@@ -58,7 +58,7 @@ def edit(musica_id):
     finally:
         cursor.close()
         connection.close()
-    return render_template('edit_musica.html', musica =[], musica_to_edit=contact)
+    return render_template('edit.html', musica =[], musica_to_edit=contact)
 
 @app.route('/update/<int:musica_id>', methods =['POST'])
 def update(musica_id):
