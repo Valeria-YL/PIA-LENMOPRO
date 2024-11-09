@@ -1,11 +1,66 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for,session
 import pymysql
 import pymysql.cursors
 from dbconfig import getDBConnection
 
 app = Flask(__name__)
+app.secret_key = "super secret key"
+@app.route('/', methods=['GET'])
+def home():
+    return render_template('sign_in.html')
 
-@app.route('/', methods=["GET"])
+@app.route('/sign_in', methods=['GET','POST'])
+def sign_in():
+    if request.method == 'POST':
+        usuario = request.form['usuario']
+        contraseña = request.form['contraseña']
+        email = request.form['email']
+
+        connection = getDBConnection()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute("SELECT * FROM usuarios WHERE email =%s", (email))
+        usuario_existente = cursor.fetchone()
+
+        if usuario_existente:
+            return render_template('sign_in.html', message="El email ya ha sido registrado.")
+
+        try:
+            cursor.execute("INSERT INTO usuarios (usuario, contraseña, email) VALUES (%s,%s,%s)", (usuario, contraseña, email))
+            connection.commit()
+            return redirect(url_for('login'))
+        except pymysql.MySQLError as e:
+            print(f"Error: {e}")
+        finally:
+            cursor.close()
+            connection.close()
+
+    return render_template('sign_in.html')
+
+@app.route('/login', methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        contraseña = request.form['contraseña']
+    
+        connection = getDBConnection()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute("SELECT * FROM usuarios WHERE email = %s AND contraseña = %s", (email, contraseña))
+        usuario_existente = cursor.fetchone()
+        cursor.close()
+
+        if usuario_existente is not None:
+            session['email'] = email
+            session['usuario'] = usuario_existente['usuario']
+
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', message="Correo o constraseña incorrectos")
+
+    return render_template('login.html')
+
+@app.route('/form', methods=["GET"])
 def index():
     connection = getDBConnection()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
