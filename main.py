@@ -4,6 +4,7 @@ import pymysql.cursors
 from dbconfig import getDBConnection
 
 app = Flask(__name__)
+
 app.secret_key = "super secret key"
 @app.route('/', methods=['GET'])
 def home():
@@ -13,7 +14,7 @@ def home():
 def sign_in():
     if request.method == 'POST':
         usuario = request.form['usuario']
-        contraseña = request.form['contraseña']
+        cont = request.form['cont']
         email = request.form['email']
 
         connection = getDBConnection()
@@ -26,7 +27,7 @@ def sign_in():
             return render_template('sign_in.html', message="El email ya ha sido registrado.")
 
         try:
-            cursor.execute("INSERT INTO usuarios (usuario, contraseña, email) VALUES (%s,%s,%s)", (usuario, contraseña, email))
+            cursor.execute("INSERT INTO usuarios (usuario, cont, email) VALUES (%s,%s,%s)", (usuario, cont, email))
             connection.commit()
             return redirect(url_for('login'))
         except pymysql.MySQLError as e:
@@ -41,12 +42,12 @@ def sign_in():
 def login():
     if request.method == 'POST':
         email = request.form['email']
-        contraseña = request.form['contraseña']
+        cont = request.form['cont']
     
         connection = getDBConnection()
         cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-        cursor.execute("SELECT * FROM usuarios WHERE email = %s AND contraseña = %s", (email, contraseña))
+        cursor.execute("SELECT * FROM usuarios WHERE email = %s AND cont = %s", (email, cont))
         usuario_existente = cursor.fetchone()
         cursor.close()
 
@@ -59,7 +60,6 @@ def login():
             return render_template('login.html', message="Correo o constraseña incorrectos")
 
     return render_template('login.html')
-
 @app.route('/form', methods=["GET"])
 def index():
     connection = getDBConnection()
